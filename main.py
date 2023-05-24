@@ -158,7 +158,7 @@ def inicio():
     root.resizable(False, False)
     root.title("Método LU")
     Label(root, text="TP LU - Métodos Numéricos", font=("Arial", 16, "bold")).place(x=10, y=10)
-    Label(root, text="Grupo 08 conformado por Riccone, Nicotra y Díaz", font=("Arial", 12, "bold")).place(x=10, y=45)
+    Label(root, text="Grupo 08 conformado por Riccone y Nicotra", font=("Arial", 12, "bold")).place(x=10, y=45)
     Label(root, text="------------------------------------", font=("Arial", 11)).place(x=10, y=75)
     Label(root, text="Ingrese la dimensión de la Matriz cuadrada a resolver (1-4):", font=("Arial", 11)).place(x=10, y=105)
     cajaDimension.place(x=405, y=105, width=30, height=25)
