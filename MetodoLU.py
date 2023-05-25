@@ -147,7 +147,7 @@ def ingresarMatrizYVector(dimension):
 
 def validarDimEIngresarMatrizYVector():
     dimensionIngresada = cajaDimension.get()
-    if dimensionIngresada != "" and dimensionIngresada != "-" and 5 > int(dimensionIngresada) > 0:
+    if dimensionIngresada != "" and dimensionIngresada != "-" and dimensionIngresada.startswith(".") is False and 5 > int(dimensionIngresada) > 0:
         ingresarMatrizYVector(int(dimensionIngresada))
     else:
         cartelError_Dimension.place(x=10, y=140)
