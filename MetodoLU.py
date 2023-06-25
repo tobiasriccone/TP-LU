@@ -7,6 +7,7 @@ def descomposicionLUCorrecta(a, l, u):
 
 def validarOperacionLU(matriz, l, u, altura):
     if not descomposicionLUCorrecta(matriz, l, u):
+        cartelOk_Matriz.place_forget()
         errorVerificacionLabel.place(x=10, y=altura)
         raise Exception("Se produjo un error al decomponer la matríz")
 
