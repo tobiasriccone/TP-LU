@@ -5,11 +5,12 @@ from tkinter import *
 def descomposicionLUCorrecta(a, l, u):
     return np.array_equal(np.matmul(l, u), a)
 
-def validarOperacionLU(matriz, l, u):
+def validarOperacionLU(matriz, l, u, altura):
     if not descomposicionLUCorrecta(matriz, l, u):
+        errorVerificacionLabel.place(x=10, y=altura)
         raise Exception("Se produjo un error al decomponer la matríz")
 
-def descomposicionLU(matriz):
+def descomposicionLU(matriz, alturaCartel):
     dim = matriz.shape[0]
     l = np.zeros((dim, dim))
     u = np.copy(matriz)
@@ -23,7 +24,7 @@ def descomposicionLU(matriz):
             l[col, fil] = coef
             u[col, :] -= coef * u[fil, :]
             pasosU += 1
-    validarOperacionLU(matriz, l, u)
+    validarOperacionLU(matriz, l, u, alturaCartel)
     return l, u, pasosL, pasosU
 
 def matrizValidaParaLU(matriz):
@@ -49,7 +50,9 @@ def obtenerMatrizDesdeInputs(listaFilasMatriz, alturaCartel):
     for fila in listaFilasMatriz:
         for elemento in fila:
             valorIngresado = elemento.get()
+            elemento.config(bg="white")
             if valorIngresado == "" or valorIngresado == "-" or valorIngresado.startswith("."):
+                elemento.config(bg="#FFAAAA")
                 cartelError_MatrizIncompleta.place(x=10, y=alturaCartel)
                 raise Exception("La matríz ingresada no es válida")
             matriz[i][j] = valorIngresado
@@ -84,39 +87,53 @@ def imprimirMatriz(matriz, x, y):
     return ultimoX
 
 def verDetalle(l, u, y, pasosL, pasosU, altura):
+    dim = int(cajaDimension.get())
+    opsL = dim*(dim-1)
+    opsU = opsL + dim
     obtenerElementoPorTexto(Button, "Más detalles").config(state=DISABLED)
-    Label(root, text=f"Se realizaron {pasosL} pasos para L y {pasosU} pasos para U al aplicar la Eliminación Gaussiana",font=("Arial", 11)).place(x=10, y=altura)
-    Label(root, text=f"Matríz L - U - Y:", font=("Arial", 11)).place(x=10, y=altura+25)
-    ultimoX = imprimirMatriz(l, 10, altura + 50)
-    ultimoX = imprimirMatriz(u, ultimoX + 20, altura + 50)
-    imprimirMatriz(y, ultimoX + 30, altura + 50)
+    Label(root, text=f"Se realizaron {opsL} operaciones elementales al despejar Ly = b y {opsU} al despejar Ux = y", font=("Arial", 11)).place(x=10, y=altura)
+    Label(root, text=f"Se realizo un total de {opsL + opsU} operaciones elementales", font=("Arial", 11)).place(x=10, y=altura+25)
+    Label(root, text=f"Se realizaron {pasosL} pasos para L y {pasosU} pasos para U al aplicar la Eliminación Gaussiana",font=("Arial", 11)).place(x=10, y=altura+50)
+    Label(root, text=f"Matríz L - U - Y:", font=("Arial", 11)).place(x=10, y=altura + 75)
+    ultimoX = imprimirMatriz(l, 10, altura + 100)
+    ultimoX = imprimirMatriz(u, ultimoX + 30, altura + 100)
+    imprimirMatriz(y, ultimoX + 30, altura + 100)
+
+def truncar(nroDecimal):
+    i = 1
+    pasePto = False
+    for nro in nroDecimal:
+        if pasePto:
+            if nro != "0":
+                break
+            i += 1
+        if nro == ".":
+            pasePto = True
+    return round(float(nroDecimal), i)
 
 def mostrarRespuesta(vectorSolucion, alturaCartel):
-    dim = int(cajaDimension.get())
-    opElementales = int(dim*(dim+1)/2)
     vectorString = ""
     for lista in vectorSolucion:
         for elemento in lista:
-            vectorString += f"{int(elemento)}   "
-    Label(root, text=f"Vector X obtenido por LU:   {vectorString}", font=("Arial", 11)).place(x=10, y=alturaCartel)
-    Label(root, text=f"Se realizaron {opElementales} operaciones elementales para obtener el vector Y, y {opElementales} para obtener el vector X", font=("Arial", 11)).place(x=10, y=alturaCartel+25)
-    Label(root, text=f"Se realizo un total de {opElementales*2} operaciones elementales", font=("Arial", 11)).place(x=10, y=alturaCartel + 50)
+            vectorString += f"{truncar(str(elemento))}, "
+    Label(root, text=f"Vector X:   ( {vectorString[:-2]} )", font=("Arial", 11)).place(x=10, y=alturaCartel)
 
 def calcular(listaFilasMatriz, listaFilasVector, alturaCartel):
     cartelError_MatrizIncompleta.place_forget()
     cartelError_MatrizInvalida.place_forget()
     cartelOk_Matriz.place_forget()
+    errorVerificacionLabel.place_forget()
     matrizA = obtenerMatrizDesdeInputs(listaFilasMatriz, alturaCartel)
     vector = obtenerMatrizDesdeInputs(listaFilasVector, alturaCartel)
     validarMatrizIngresada(matrizA, alturaCartel)
+    l, u, pasosL, pasosU = descomposicionLU(matrizA, alturaCartel)
     obtenerElementoPorTexto(Button, "Calcular X").config(state=DISABLED)
     deshabilitarElementosPorListaDeListas(listaFilasMatriz)
     deshabilitarElementosPorListaDeListas(listaFilasVector)
-    l, u, pasosL, pasosU = descomposicionLU(matrizA)
     y = np.linalg.solve(l, vector)
     vectorSolucion = np.linalg.solve(u, y)
     mostrarRespuesta(vectorSolucion, alturaCartel+30)
-    Button(root, text="Más detalles", command=lambda: verDetalle(l, u, y, pasosL, pasosU, alturaCartel+140)).place(x=10, y=alturaCartel+110)
+    Button(root, text="Más detalles", command=lambda: verDetalle(l, u, y, pasosL, pasosU, alturaCartel+100), bg="black", fg="white").place(x=10, y=alturaCartel+65)
 
 def crearInputsMatriz(filas, columnas, posXInicial, posYInicial):
     listaFilas = []
@@ -142,12 +159,13 @@ def ingresarMatrizYVector(dimension):
     Label(root, text="Ingrese la Matríz A y su Vector b:", font=("Arial", 11)).place(x=10, y=140)
     listaFilasMatriz, ultimoXUsado, ultimaYUsada = crearInputsMatriz(dimension, dimension, 12, 180)
     listaFilasVector, ultimoXUsado, ultimaYUsada = crearInputsMatriz(dimension, 1, ultimoXUsado + 50, 180)
-    botonCalcular = Button(root, text="Calcular X", command=lambda: calcular(listaFilasMatriz, listaFilasVector, ultimaYUsada))
+    botonCalcular = Button(root, text="Calcular X", command=lambda: calcular(listaFilasMatriz, listaFilasVector, ultimaYUsada), bg="black", fg="white")
     botonCalcular.place(x=230, y=140)
+    Label(root, text="Desplazarse con TAB", fg="grey").place(x=300, y=142)
 
 def validarDimEIngresarMatrizYVector():
     dimensionIngresada = cajaDimension.get()
-    if dimensionIngresada != "" and dimensionIngresada != "-" and dimensionIngresada.startswith(".") is False and 5 > int(dimensionIngresada) > 0:
+    if dimensionIngresada != "" and dimensionIngresada != "-" and dimensionIngresada.startswith(".") is False and 4 > int(dimensionIngresada) > 0:
         ingresarMatrizYVector(int(dimensionIngresada))
     else:
         cartelError_Dimension.place(x=10, y=140)
@@ -160,7 +178,7 @@ def inicio():
     Label(root, text="TP LU - Métodos Numéricos", font=("Arial", 16, "bold")).place(x=10, y=10)
     Label(root, text="Grupo 08 conformado por Riccone y Nicotra", font=("Arial", 12, "bold")).place(x=10, y=45)
     Label(root, text="------------------------------------", font=("Arial", 11)).place(x=10, y=75)
-    Label(root, text="Ingrese la dimensión de la Matriz cuadrada a resolver (1-4):", font=("Arial", 11)).place(x=10, y=105)
+    Label(root, text="Ingrese la dimensión de la Matriz cuadrada a resolver (1-3):", font=("Arial", 11)).place(x=10, y=105)
     cajaDimension.place(x=405, y=105, width=30, height=25)
     botonSiguiente.place(x=445, y=103)
     root.mainloop()
@@ -171,10 +189,11 @@ def teclaValida(input):
 root = Tk()
 validacionInputs = root.register(teclaValida)
 cajaDimension = Entry(root, validate="key", validatecommand=(validacionInputs, '%P'))
-botonSiguiente = Button(root, text="Siguiente", command=validarDimEIngresarMatrizYVector)
+botonSiguiente = Button(root, text="Siguiente", command=validarDimEIngresarMatrizYVector, bg="black", fg="white")
 Button(root, text="Salir", command=root.destroy, bg="red", fg="white").place(x=750, y=10)
-cartelError_MatrizInvalida = Label(root, text="Los determinantes de las submatrices deben ser != 0", font=("Arial", 11), fg="red")
+cartelError_MatrizInvalida = Label(root, text="Los determinantes de las submatrices deben ser != 0, modifiquela y calcule nuevamente", font=("Arial", 11), fg="red")
 cartelError_MatrizIncompleta = Label(root, text="La matríz esta incompleta, modifiquela y calcule nuevamente", font=("Arial", 11), fg="red")
-cartelError_Dimension = Label(root, text="Dimension inválida, ingrese una dimension menor a 5", font=("Arial", 11), fg="red")
+cartelError_Dimension = Label(root, text="Dimension inválida, ingrese una dimension menor o igual a 3", font=("Arial", 11), fg="red")
+errorVerificacionLabel = Label(root, text="Este programa no es capaz de descomponer esta matríz, modifiquela", font=("Arial", 11), fg="red")
 cartelOk_Matriz = Label(root, text="La matríz cumple los requisitos para descomponerla en LU", font=("Arial", 11), fg="green")
 inicio()
